@@ -1,0 +1,129 @@
+{
+    "name": "df_encounters_transform",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_encounters_raw_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "enocuntersSource"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_encounters_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sinkEncountersCurated"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "derivedEncountersCurated"
+                },
+                {
+                    "name": "select1"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          Id as string,",
+                "          START as string,",
+                "          STOP as string,",
+                "          PATIENT as string,",
+                "          ORGANIZATION as string,",
+                "          PROVIDER as string,",
+                "          PAYER as string,",
+                "          ENCOUNTERCLASS as string,",
+                "          CODE as string,",
+                "          DESCRIPTION as string,",
+                "          BASE_ENCOUNTER_COST as string,",
+                "          TOTAL_CLAIM_COST as string,",
+                "          PAYER_COVERAGE as string,",
+                "          REASONCODE as string,",
+                "          REASONDESCRIPTION as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> enocuntersSource",
+                "enocuntersSource derive(encounter_id = Id,",
+                "          patient_id = PATIENT,",
+                "          provider_id = PROVIDER,",
+                "          organization_id = ORGANIZATION,",
+                "          payer_id = PAYER,",
+                "          encounter_class = upper(ENCOUNTERCLASS),",
+                "          encounter_code = CODE,",
+                "          encounter_description = DESCRIPTION,",
+                "          start_date = toTimestamp(START),",
+                "          stop_date = toTimestamp(STOP),",
+                "          base_encounter_cost = toFloat(BASE_ENCOUNTER_COST),",
+                "          total_claim_cost = toFloat(TOTAL_CLAIM_COST),",
+                "          payer_coverage = toFloat(PAYER_COVERAGE)) ~> derivedEncountersCurated",
+                "derivedEncountersCurated select(mapColumn(",
+                "          Id,",
+                "          encounter_id,",
+                "          patient_id,",
+                "          provider_id,",
+                "          organization_id,",
+                "          payer_id,",
+                "          encounter_class,",
+                "          encounter_code,",
+                "          encounter_description,",
+                "          start_date,",
+                "          stop_date,",
+                "          base_encounter_cost = derivedEncountersCurated@base_encounter_cost,",
+                "          total_claim_cost = derivedEncountersCurated@total_claim_cost,",
+                "          payer_coverage = derivedEncountersCurated@payer_coverage",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> select1",
+                "select1 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     input(",
+                "          encounter_id as string,",
+                "          patient_id as string,",
+                "          provider_id as string,",
+                "          organization_id as string,",
+                "          payer_id as string,",
+                "          encounter_class as string,",
+                "          encounter_code as string,",
+                "          encounter_description as string,",
+                "          start_date as timestamp,",
+                "          stop_date as timestamp,",
+                "          base_encounter_cost as double,",
+                "          total_claim_cost as double,",
+                "          payer_coverage as double",
+                "     ),",
+                "     deletable:false,",
+                "     insertable:true,",
+                "     updateable:false,",
+                "     upsertable:false,",
+                "     truncate:true,",
+                "     format: 'table',",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     errorHandlingOption: 'stopOnFirstError',",
+                "     mapColumn(",
+                "          encounter_id,",
+                "          patient_id,",
+                "          provider_id,",
+                "          organization_id,",
+                "          payer_id,",
+                "          encounter_class,",
+                "          encounter_code,",
+                "          encounter_description,",
+                "          start_date,",
+                "          stop_date,",
+                "          base_encounter_cost,",
+                "          total_claim_cost,",
+                "          payer_coverage",
+                "     )) ~> sinkEncountersCurated"
+            ]
+        }
+    }
+}
