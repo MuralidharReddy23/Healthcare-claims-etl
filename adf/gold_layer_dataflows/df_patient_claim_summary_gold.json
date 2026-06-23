@@ -1,0 +1,135 @@
+{
+    "name": "df_patient_claim_summary_gold",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_patients_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sourcePatients"
+                },
+                {
+                    "dataset": {
+                        "referenceName": "ds_claims_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sourceClaims"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_patients_claims_summary_gold",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink1"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "joinPatientsClaims"
+                },
+                {
+                    "name": "derivedColumn1"
+                },
+                {
+                    "name": "aggregatePatientsClaims"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          patient_id as string,",
+                "          birth_date as date,",
+                "          death_date as date,",
+                "          first_name as string,",
+                "          last_name as string,",
+                "          gender as string,",
+                "          race as string,",
+                "          ethnicity as string,",
+                "          city as string,",
+                "          state as string,",
+                "          county as string,",
+                "          zip as string,",
+                "          income as double,",
+                "          healthcare_expenses as double,",
+                "          healthcare_coverage as double",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> sourcePatients",
+                "source(output(",
+                "          claim_id as string,",
+                "          patient_id as string,",
+                "          provider_id as string,",
+                "          primary_insurance_id as string,",
+                "          department_id as string,",
+                "          service_date as date,",
+                "          current_illness_date as date,",
+                "          status1 as string,",
+                "          status2 as string,",
+                "          claim_type1 as string,",
+                "          claim_type2 as string,",
+                "          outstanding1 as double,",
+                "          outstanding2 as double,",
+                "          outstanding_patient as double",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> sourceClaims",
+                "sourcePatients, sourceClaims join(sourcePatients@patient_id == sourceClaims@patient_id,",
+                "     joinType:'inner',",
+                "     matchType:'exact',",
+                "     ignoreSpaces: false,",
+                "     broadcast: 'auto')~> joinPatientsClaims",
+                "joinPatientsClaims derive(claim_outstanding_amount = coalesce(outstanding1, 0)  + coalesce(outstanding2, 0)  + coalesce(outstanding_patient, 0)) ~> derivedColumn1",
+                "derivedColumn1 aggregate(groupBy(sourcePatients@patient_id,",
+                "          first_name,",
+                "          last_name,",
+                "          gender,",
+                "          city,",
+                "          state),",
+                "     total_claims = count(claim_id),",
+                "          total_outstanding_amount = sum(claim_outstanding_amount),",
+                "          avg_outstanding_amount = avg(claim_outstanding_amount)) ~> aggregatePatientsClaims",
+                "aggregatePatientsClaims sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     input(",
+                "          patient_id as string,",
+                "          first_name as string,",
+                "          last_name as string,",
+                "          gender as string,",
+                "          city as string,",
+                "          state as string,",
+                "          total_claims as integer,",
+                "          total_outstanding_amount as double,",
+                "          avg_outstanding_amount as double",
+                "     ),",
+                "     deletable:false,",
+                "     insertable:true,",
+                "     updateable:false,",
+                "     upsertable:false,",
+                "     truncate:true,",
+                "     format: 'table',",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     errorHandlingOption: 'stopOnFirstError',",
+                "     mapColumn(",
+                "          patient_id,",
+                "          first_name,",
+                "          last_name,",
+                "          gender,",
+                "          city,",
+                "          state,",
+                "          total_claims,",
+                "          total_outstanding_amount,",
+                "          avg_outstanding_amount",
+                "     )) ~> sink1"
+            ]
+        }
+    }
+}
