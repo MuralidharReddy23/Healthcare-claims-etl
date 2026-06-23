@@ -1,0 +1,132 @@
+{
+    "name": "df_claims_transform",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_claims_raw_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sourceClaimsRaw"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_claims_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sinkClaimsCurated"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "derivedClaimsCurated"
+                },
+                {
+                    "name": "select1"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          Id as string,",
+                "          PATIENTID as string,",
+                "          PROVIDERID as string,",
+                "          PRIMARYPATIENTINSURANCEID as string,",
+                "          SECONDARYPATIENTINSURANCEID as string,",
+                "          DEPARTMENTID as string,",
+                "          PATIENTDEPARTMENTID as string,",
+                "          DIAGNOSIS1 as string,",
+                "          DIAGNOSIS2 as string,",
+                "          DIAGNOSIS3 as string,",
+                "          DIAGNOSIS4 as string,",
+                "          DIAGNOSIS5 as string,",
+                "          DIAGNOSIS6 as string,",
+                "          DIAGNOSIS7 as string,",
+                "          DIAGNOSIS8 as string,",
+                "          REFERRINGPROVIDERID as string,",
+                "          APPOINTMENTID as string,",
+                "          CURRENTILLNESSDATE as string,",
+                "          SERVICEDATE as string,",
+                "          SUPERVISINGPROVIDERID as string,",
+                "          STATUS1 as string,",
+                "          STATUS2 as string,",
+                "          STATUSP as string,",
+                "          OUTSTANDING1 as string,",
+                "          OUTSTANDING2 as string,",
+                "          OUTSTANDINGP as string,",
+                "          LASTBILLEDDATE1 as string,",
+                "          LASTBILLEDDATE2 as string,",
+                "          LASTBILLEDDATEP as string,",
+                "          HEALTHCARECLAIMTYPEID1 as string,",
+                "          HEALTHCARECLAIMTYPEID2 as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> sourceClaimsRaw",
+                "sourceClaimsRaw derive(claim_id = Id,",
+                "          patient_id = PATIENTID,",
+                "          provider_id = PROVIDERID,",
+                "          primary_insurance_id = PRIMARYPATIENTINSURANCEID,",
+                "          department_id = DEPARTMENTID,",
+                "          service_date = toDate(SERVICEDATE),",
+                "          current_illness_date = toDate(CURRENTILLNESSDATE),",
+                "          status1 = upper(STATUS1),",
+                "          status2 = upper(STATUS2),",
+                "          claim_type1 = HEALTHCARECLAIMTYPEID1,",
+                "          claim_type2 = HEALTHCARECLAIMTYPEID2,",
+                "          oustanding1 = toFloat(OUTSTANDING1),",
+                "          outstanding2 = toFloat(OUTSTANDING2),",
+                "          outstanding_patient = toFloat(OUTSTANDINGP)) ~> derivedClaimsCurated",
+                "derivedClaimsCurated select(mapColumn(",
+                "          claim_id,",
+                "          patient_id,",
+                "          provider_id,",
+                "          primary_insurance_id,",
+                "          department_id,",
+                "          service_date,",
+                "          current_illness_date,",
+                "          status1 = derivedClaimsCurated@status1,",
+                "          status2 = derivedClaimsCurated@status2,",
+                "          claim_type1,",
+                "          claim_type2,",
+                "          oustanding1,",
+                "          outstanding2 = derivedClaimsCurated@outstanding2,",
+                "          outstanding_patient",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> select1",
+                "select1 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     input(",
+                "          claim_id as string,",
+                "          patient_id as string,",
+                "          provider_id as string,",
+                "          primary_insurance_id as string,",
+                "          department_id as string,",
+                "          service_date as date,",
+                "          current_illness_date as date,",
+                "          status1 as string,",
+                "          status2 as string,",
+                "          claim_type1 as string,",
+                "          claim_type2 as string,",
+                "          outstanding1 as double,",
+                "          outstanding2 as double,",
+                "          outstanding_patient as double",
+                "     ),",
+                "     deletable:false,",
+                "     insertable:true,",
+                "     updateable:false,",
+                "     upsertable:false,",
+                "     truncate:true,",
+                "     format: 'table',",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     errorHandlingOption: 'stopOnFirstError') ~> sinkClaimsCurated"
+            ]
+        }
+    }
+}
