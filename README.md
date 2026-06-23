@@ -1,12 +1,12 @@
 
-Project Overview
+## Project Overview
 
 This project demonstrates an end-to-end Healthcare Claims ETL solution built using Azure Data Factory, Azure Blob Storage, Azure SQL Database, and Power BI. The objective of the project is to ingest healthcare claims data from raw CSV files, perform data cleansing and transformations, load curated data into Azure SQL Database, create business-ready gold-layer datasets, and visualize healthcare insights through Power BI dashboards.
 The solution follows a modern Medallion Architecture approach consisting of Raw (Bronze), Curated (Silver), and Gold layers.
 
 ⸻
 
-Technologies Used
+## Technologies Used
 
 * Azure Data Factory (ADF)
 * Azure Blob Storage
@@ -20,39 +20,25 @@ Technologies Used
 
 ⸻
 
-Dataset Overview
+## Dataset Overview
 
-The project processes healthcare operational datasets:
+## The project processes healthcare operational datasets:
 
-Patients
-
-Contains patient demographic information.
-
-Providers
-
-Contains healthcare provider information.
-
-Claims
-
-Contains insurance claim details.
-
-Encounters
-
-Contains patient-provider encounter records.
-
-Claims Transactions
-
-Contains claim payment and adjustment transactions.
+Patients - Contains patient demographic information.
+Providers - Contains healthcare provider information.
+Claims - Contains insurance claim details.
+Encounters - Contains patient-provider encounter records.
+Claims Transactions - Contains claim payment and adjustment transactions.
 
 ⸻
 
-Solution Architecture
+## Solution Architecture
 
-Bronze Layer (Raw)
+## Bronze Layer (Raw)
 
 Raw healthcare datasets are ingested into Azure Blob Storage.
 
-Tables:
+## Tables:
 
 * patients_raw
 * providers_raw
@@ -60,7 +46,7 @@ Tables:
 * encounters_raw
 * claims_transactions_raw
 
-Activities
+## Activities
 
 * Source Data Ingestion
 * File Validation
@@ -68,11 +54,11 @@ Activities
 
 ⸻
 
-Silver Layer (Curated)
+## Silver Layer (Curated)
 
 Data cleansing and transformation are performed using Azure Data Factory Mapping Data Flows.
 
-Transformations include:
+## Transformations include:
 
 * Data Type Conversion
 * Null Handling
@@ -81,7 +67,7 @@ Transformations include:
 * Derived Columns
 * Data Quality Improvements
 
-Curated Tables:
+## Curated Tables:
 
 * patients_curated
 * providers_curated
@@ -91,7 +77,7 @@ Curated Tables:
 
 ⸻
 
-Gold Layer (Business Ready)
+## Gold Layer (Business Ready)
 
 Business-focused analytical tables are created for reporting and dashboarding.
 
@@ -116,11 +102,9 @@ Metrics:
 Patient Claim Summary Gold
 
 Table:
-
 patient_claim_summary_gold
 
 Metrics:
-
 * Patient Information
 * Total Claims
 * Outstanding Amount
@@ -131,11 +115,9 @@ Metrics:
 Claims Financial Summary Gold
 
 Table:
-
 claims_financial_summary_gold
 
 Metrics:
-
 * Claim Type
 * Claim Status
 * Total Claims
@@ -146,14 +128,11 @@ Metrics:
 
 Azure Data Factory Components
 
-Pipeline
+## Pipeline
 
-pl_csv_to_raw
-
-Responsible for loading source healthcare CSV files into Azure SQL Database.
+pl_csv_to_raw - Responsible for loading source healthcare CSV files into Azure SQL Database.
 
 Activities:
-
 * Patients Copy Activity
 * Providers Copy Activity
 * Claims Copy Activity
@@ -162,47 +141,9 @@ Activities:
 
 ⸻
 
-Data Flows
+## Data Validation
 
-df_patients_transform
-
-Patient data cleansing and transformation.
-
-df_providers_transform
-
-Provider data standardization and transformation.
-
-df_claims_transform
-
-Claims data processing.
-
-df_encounters_transform
-
-Encounter data processing.
-
-df_claims_transactions_transform
-
-Claims transaction processing.
-
-df_provider_performance_gold
-
-Provider performance aggregation.
-
-df_patient_claim_summary_gold
-
-Patient claim aggregation and summarization.
-
-df_claims_financial_summary_gold
-
-Claims financial metrics aggregation.
-
-⸻
-
-Data Validation
-
-Data validation was performed using SQL queries to verify successful ETL execution.
-
-Record Count Validation
+## Record Count Validation
 
 SELECT COUNT(*) FROM patients_curated;
 SELECT COUNT(*) FROM providers_curated;
@@ -213,7 +154,7 @@ SELECT COUNT(*) FROM provider_performance_gold;
 SELECT COUNT(*) FROM patient_claim_summary_gold;
 SELECT COUNT(*) FROM claims_financial_summary_gold;
 
-Sample Data Validation
+## Sample Data Validation
 
 SELECT TOP 10 *
 FROM provider_performance_gold;
@@ -221,69 +162,6 @@ SELECT TOP 10 *
 FROM patient_claim_summary_gold;
 SELECT TOP 10 *
 FROM claims_financial_summary_gold;
-
-⸻
-
-Power BI Dashboard
-
-A Power BI dashboard was created on top of the Gold Layer datasets.
-
-Dashboard KPIs
-
-Total Claims
-
-Displays total number of claims processed.
-
-Total Outstanding Amount
-
-Displays total unpaid claim amount.
-
-Average Outstanding Amount
-
-Displays average outstanding amount across claims.
-
-Patient Count
-
-Displays total patients included in the analytical dataset.
-
-⸻
-
-Project Screenshots
-
-Pipeline Execution
-
-Insert screenshot:
-
-screenshots/pipeline-run.png
-
-⸻
-
-Data Flow Transformation
-
-Insert screenshot:
-
-screenshots/dataflow.png
-
-⸻
-
-SQL Validation
-
-Insert screenshot:
-
-screenshots/sql-output.png
-
-
-⸻
-
-Future Enhancements
-
-* Incremental Data Loading
-* Parameterized Pipelines
-* Dynamic Metadata-Driven Framework
-* Error Handling Framework
-* Logging and Monitoring
-* Azure Key Vault Integration
-* CI/CD Deployment using Azure DevOps
 
 ⸻
 Muralidhar Reddy Mandadi
