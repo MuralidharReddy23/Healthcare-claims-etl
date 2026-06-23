@@ -1,0 +1,130 @@
+{
+    "name": "df_providers_performance_gold",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_providers_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sourceProviders"
+                },
+                {
+                    "dataset": {
+                        "referenceName": "ds_claims_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sourceClaims"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_provider_proformance_gold_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink1"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "join1"
+                },
+                {
+                    "name": "aggregate1"
+                },
+                {
+                    "name": "derivedProvidersClaims"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          provider_id as string,",
+                "          organization_id as string,",
+                "          provider_name as string,",
+                "          gender as string,",
+                "          specialty as string,",
+                "          address as string,",
+                "          city as string,",
+                "          state as string,",
+                "          zip as string,",
+                "          latitude as double,",
+                "          longitude as double,",
+                "          encounters as integer,",
+                "          procedures_count as integer",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> sourceProviders",
+                "source(output(",
+                "          claim_id as string,",
+                "          patient_id as string,",
+                "          provider_id as string,",
+                "          primary_insurance_id as string,",
+                "          department_id as string,",
+                "          service_date as date,",
+                "          current_illness_date as date,",
+                "          status1 as string,",
+                "          status2 as string,",
+                "          claim_type1 as string,",
+                "          claim_type2 as string,",
+                "          outstanding1 as double,",
+                "          outstanding2 as double,",
+                "          outstanding_patient as double",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> sourceClaims",
+                "sourceProviders, sourceClaims join(sourceProviders@provider_id == sourceClaims@provider_id,",
+                "     joinType:'inner',",
+                "     matchType:'exact',",
+                "     ignoreSpaces: false,",
+                "     broadcast: 'auto')~> join1",
+                "derivedProvidersClaims aggregate(groupBy(sourceProviders@provider_id,",
+                "          provider_name,",
+                "          specialty,",
+                "          city,",
+                "          state),",
+                "     total_claims = count(claim_id),",
+                "          total_outstanding_amount = sum(claim_outstanding_amount),",
+                "          avg_outstanding_amount = avg(claim_outstanding_amount)) ~> aggregate1",
+                "join1 derive(claim_outstanding_amount = coalesce(outstanding1, 0)  + coalesce(outstanding2, 0)  + coalesce(outstanding_patient, 0)) ~> derivedProvidersClaims",
+                "aggregate1 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     input(",
+                "          provider_id as string,",
+                "          provider_name as string,",
+                "          specialty as string,",
+                "          city as string,",
+                "          state as string,",
+                "          total_claims as integer,",
+                "          total_outstanding_amount as double,",
+                "          avg_outstanding_amount as double",
+                "     ),",
+                "     deletable:false,",
+                "     insertable:true,",
+                "     updateable:false,",
+                "     upsertable:false,",
+                "     truncate:true,",
+                "     format: 'table',",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     errorHandlingOption: 'stopOnFirstError',",
+                "     mapColumn(",
+                "          provider_id,",
+                "          provider_name,",
+                "          specialty,",
+                "          city,",
+                "          state,",
+                "          total_claims,",
+                "          total_outstanding_amount,",
+                "          avg_outstanding_amount",
+                "     )) ~> sink1"
+            ]
+        }
+    }
+}
