@@ -1,16 +1,8 @@
-Healthcare Claims ETL Pipeline using Azure Data Factory
 
 Project Overview
 
 This project demonstrates an end-to-end Healthcare Claims ETL solution built using Azure Data Factory, Azure Blob Storage, Azure SQL Database, and Power BI. The objective of the project is to ingest healthcare claims data from raw CSV files, perform data cleansing and transformations, load curated data into Azure SQL Database, create business-ready gold-layer datasets, and visualize healthcare insights through Power BI dashboards.
 The solution follows a modern Medallion Architecture approach consisting of Raw (Bronze), Curated (Silver), and Gold layers.
-
-⸻
-
-Architecture
-
-High-Level Data Flow
-
 
 ⸻
 
