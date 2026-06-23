@@ -1,0 +1,120 @@
+{
+    "name": "df_poviders_transform",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_providers_raw_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "providersSourceRaw"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_providers_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink1"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "derivedProvidersRaw"
+                },
+                {
+                    "name": "select1"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          Id as string,",
+                "          ORGANIZATION as string,",
+                "          NAME as string,",
+                "          GENDER as string,",
+                "          SPECIALITY as string,",
+                "          ADDRESS as string,",
+                "          CITY as string,",
+                "          STATE as string,",
+                "          ZIP as string,",
+                "          LAT as string,",
+                "          LON as string,",
+                "          ENCOUNTERS as string,",
+                "          PROCEDURES as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> providersSourceRaw",
+                "providersSourceRaw derive(encounters = toInteger(ENCOUNTERS),",
+                "          procedures = toInteger(PROCEDURES),",
+                "          latitude = toFloat(LAT),",
+                "          longitude = toFloat(LON),",
+                "          city = upper(CITY),",
+                "          state = upper(STATE),",
+                "          specialty = upper(SPECIALITY)) ~> derivedProvidersRaw",
+                "derivedProvidersRaw select(mapColumn(",
+                "          Id,",
+                "          ORGANIZATION,",
+                "          NAME,",
+                "          GENDER,",
+                "          specialty,",
+                "          ADDRESS,",
+                "          CITY = derivedProvidersRaw@city,",
+                "          STATE = derivedProvidersRaw@state,",
+                "          ZIP,",
+                "          encounters = derivedProvidersRaw@encounters,",
+                "          procedures = derivedProvidersRaw@procedures,",
+                "          latitude,",
+                "          longitude",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> select1",
+                "select1 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     input(",
+                "          provider_id as string,",
+                "          organization_id as string,",
+                "          provider_name as string,",
+                "          gender as string,",
+                "          specialty as string,",
+                "          address as string,",
+                "          city as string,",
+                "          state as string,",
+                "          zip as string,",
+                "          latitude as double,",
+                "          longitude as double,",
+                "          encounters as integer,",
+                "          procedures_count as integer",
+                "     ),",
+                "     deletable:false,",
+                "     insertable:true,",
+                "     updateable:false,",
+                "     upsertable:false,",
+                "     truncate:true,",
+                "     format: 'table',",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     errorHandlingOption: 'stopOnFirstError',",
+                "     mapColumn(",
+                "          provider_id = Id,",
+                "          provider_name = NAME,",
+                "          organization_id = ORGANIZATION,",
+                "          gender = GENDER,",
+                "          specialty,",
+                "          address = ADDRESS,",
+                "          city = CITY,",
+                "          state = STATE,",
+                "          zip = ZIP,",
+                "          latitude,",
+                "          longitude,",
+                "          encounters,",
+                "          procedures_count = procedures",
+                "     )) ~> sink1"
+            ]
+        }
+    }
+}
