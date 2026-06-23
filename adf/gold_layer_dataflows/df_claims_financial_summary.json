@@ -1,0 +1,86 @@
+{
+    "name": "df_claims_financial_summary_gold",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_claims_curated_sql",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sourceClaims"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "ds_claims_financial_summary_gold",
+                        "type": "DatasetReference"
+                    },
+                    "name": "sink1"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "derivedColumn1"
+                },
+                {
+                    "name": "aggregate1"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          claim_id as string,",
+                "          patient_id as string,",
+                "          provider_id as string,",
+                "          primary_insurance_id as string,",
+                "          department_id as string,",
+                "          service_date as date,",
+                "          current_illness_date as date,",
+                "          status1 as string,",
+                "          status2 as string,",
+                "          claim_type1 as string,",
+                "          claim_type2 as string,",
+                "          outstanding1 as double,",
+                "          outstanding2 as double,",
+                "          outstanding_patient as double",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     isolationLevel: 'READ_UNCOMMITTED',",
+                "     format: 'table') ~> sourceClaims",
+                "sourceClaims derive(claim_outstanding_amount = coalesce(outstanding1, 0)  + coalesce(outstanding2, 0)  + coalesce(outstanding_patient, 0)) ~> derivedColumn1",
+                "derivedColumn1 aggregate(groupBy(status1,",
+                "          claim_type1),",
+                "     total_claims = count(claim_id),",
+                "          total_outstanding1 = sum(outstanding1),",
+                "          total_outstanding2 = sum(outstanding2),",
+                "          total_outstanding_patient = sum(outstanding_patient),",
+                "          total_outstanding_amount = sum(claim_outstanding_amount),",
+                "          avg_outstanding_amount = avg(claim_outstanding_amount)) ~> aggregate1",
+                "aggregate1 sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     input(",
+                "          status1 as string,",
+                "          claim_type1 as string,",
+                "          total_claims as integer,",
+                "          total_outstanding1 as double,",
+                "          total_outstanding2 as double,",
+                "          total_outstanding_patient as double,",
+                "          total_outstanding_amount as double,",
+                "          avg_outstanding_amount as double",
+                "     ),",
+                "     deletable:false,",
+                "     insertable:true,",
+                "     updateable:false,",
+                "     upsertable:false,",
+                "     truncate:true,",
+                "     format: 'table',",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+            ]
+        }
+    }
+}
